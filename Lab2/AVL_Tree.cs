@@ -1,14 +1,19 @@
 ﻿using System;
 using Lab2;
 
-namespace H
+namespace Lab2
 {
-    class AVL<TKey, TValue> where TKey   : IComparable<TKey>/* where TValue : IComparable<TValue>*/
+    public class AVL<TKey, TValue> where TKey   : IComparable<TKey>/* where TValue : IComparable<TValue>*/
     {
         private Node<TKey, TValue> root;
 
         #region Find
-        public Node<TKey, TValue> Find(TKey Key, Node<TKey, TValue> elem)
+        public Node<TKey, TValue>  FindItem(TKey key)
+        {
+            return Find(key, root);
+        }
+
+        private Node<TKey, TValue> Find(TKey Key, Node<TKey, TValue> elem)
         {
             var res = new Node<TKey, TValue>();
 
@@ -37,19 +42,21 @@ namespace H
 
         private Node<TKey, TValue> RecursiveInsert(Node<TKey, TValue> current, Node<TKey, TValue> n)
         {
-            if (current == null)
-                throw new ItemNotExistException();
+            if (current == null) {
+                current = n;
+            }
             else if (n.Key.CompareTo(current.Key) < 0) {
                 current.left = RecursiveInsert(current.left, n);
                 current = balance_tree(current);
             }
-            else if (n.Key.CompareTo(current.Key) < 0) {
+            else if (n.Key.CompareTo(current.Key) > 0) {
                 current.right = RecursiveInsert(current.right, n);
                 current = balance_tree(current);
             }
             else {
                 throw new ItemAlreadyExistException();
             }
+
             return current;
         }
         #endregion
@@ -62,6 +69,11 @@ namespace H
             return b_factor >  1 ? (balance_factor(current.left)  > 0 ? RotateLL(current) : RotateLR(current)):
                     b_factor < -1 ? (balance_factor(current.right) > 0 ? RotateRL(current) : RotateRR(current)):
                     current;
+        }
+
+        public int getTreeHeight()
+        {
+            return getHeight(root);
         }
 
         private int getHeight(Node<TKey, TValue> current)
@@ -149,14 +161,14 @@ namespace H
     }
 
     [Serializable]
-    internal class ItemAlreadyExistException : Exception
+    public class ItemAlreadyExistException : Exception
     {
         public ItemAlreadyExistException() {
         }
     }
 
     [Serializable]
-    internal class ItemNotExistException : Exception
+    public class ItemNotExistException : Exception
     {
         public ItemNotExistException() {
         }
