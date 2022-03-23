@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lab2", "Lab2\Lab2.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AVLUnitTest", "AVLUnitTest\AVLUnitTest.csproj", "{5CB1AA56-A4CC-4120-852C-A778140DE6E5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AVLTestApp", "AVLTestApp\AVLTestApp.csproj", "{CEA08A6A-62E6-4179-9DBE-86A50231D676}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{5CB1AA56-A4CC-4120-852C-A778140DE6E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5CB1AA56-A4CC-4120-852C-A778140DE6E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5CB1AA56-A4CC-4120-852C-A778140DE6E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CEA08A6A-62E6-4179-9DBE-86A50231D676}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CEA08A6A-62E6-4179-9DBE-86A50231D676}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CEA08A6A-62E6-4179-9DBE-86A50231D676}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CEA08A6A-62E6-4179-9DBE-86A50231D676}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
