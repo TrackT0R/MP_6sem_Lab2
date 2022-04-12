@@ -10,34 +10,51 @@ namespace Lab2
         #region Find
         public Node<TKey, TValue>  FindItem(TKey key)
         {
-            return Find(key, root);
-        }
+            var current = root;
+            while (current != null) {
+                int result = current.Key.CompareTo(key);
 
-        private Node<TKey, TValue> Find(TKey Key, Node<TKey, TValue> elem)
-        {
-            var res = new Node<TKey, TValue>();
-
-            if (elem.Key.Equals(Key))
-                res = elem;
-            else if (elem.Key.CompareTo(Key) > 0) {
-                if (elem.left == null)
-                    throw new ItemNotExistException();
-                res = Find(Key, elem.left);
+                if (result > 0) {
+                    if (current.Left == null)
+                        break;
+                    current = current.Left ?? current;
+                }
+                else if (result < 0) {
+                    if (current.Right == null)
+                        break;
+                    current = current.Right ?? current;
+                }
+                else {
+                    break;
+                }
             }
-            else {
-                if (elem.left == null)
-                    throw new ItemNotExistException();
-                res = Find(Key, elem.right);
-            }
 
-            return res;
+            return current;
         }
         #endregion
 
         #region Insert
         public void Insert(TKey key, TValue val)
         {
-            root = RecursiveInsert(root, new Node<TKey, TValue>(key, val));
+            if (root == null)
+                root = new Node<TKey, TValue>(key, val);
+            else {
+                var parentNode = FindItem(key);
+                var resultComparison = parentNode.Key.CompareTo(key);
+
+                if (resultComparison == 0) {
+                    throw new ItemAlreadyExistException();
+                }
+                else if (resultComparison < 0) {
+                    parentNode.Right = new Node<TKey, TValue>(key, val, parentNode);
+                }
+                else {
+                    parentNode.Left = new Node<TKey, TValue>(key, val, parentNode);
+                }
+
+                parentNode.RecalculateHeight();
+                balance_tree(parentNode);
+            }
         }
 
         private Node<TKey, TValue> RecursiveInsert(Node<TKey, TValue> current, Node<TKey, TValue> n)
@@ -46,12 +63,12 @@ namespace Lab2
                 current = n;
             }
             else if (n.Key.CompareTo(current.Key) < 0) {
-                current.left = RecursiveInsert(current.left, n);
-                current = balance_tree(current);
+                current.Left  = RecursiveInsert(current.Left , n);
+                balance_tree(current);
             }
             else if (n.Key.CompareTo(current.Key) > 0) {
-                current.right = RecursiveInsert(current.right, n);
-                current = balance_tree(current);
+                current.Right = RecursiveInsert(current.Right, n);
+                balance_tree(current);
             }
             else {
                 throw new ItemAlreadyExistException();
@@ -62,13 +79,33 @@ namespace Lab2
         #endregion
 
         #region балансировка
-        private Node<TKey, TValue> balance_tree(Node<TKey, TValue> current)
+        private void balance_tree(Node<TKey, TValue> node)
         {
-            int b_factor = balance_factor(current);
-                
-            return b_factor >  1 ? (balance_factor(current.left)  > 0 ? RotateLL(current) : RotateLR(current)):
-                    b_factor < -1 ? (balance_factor(current.right) > 0 ? RotateRL(current) : RotateRR(current)):
-                    current;
+            while (node != null) {
+                int balance = balance_factor(node);
+
+                if (balance > 1) {
+                    int leftbalance = balance_factor(node.Left);
+
+                    if (leftbalance <= 0) {
+                        RotateLeft(node.Left);
+                    }
+
+                    RotateRight(node);
+
+                }
+                else if (balance < -1) {
+                    int rightbalance = balance_factor(node.Right);
+
+                    if (rightbalance >= 0) {
+                        RotateRight(node.Right);
+                    }
+
+                    RotateLeft(node);
+                }
+
+                node = node.Parent;
+            }
         }
 
         public int getTreeHeight()
@@ -78,84 +115,158 @@ namespace Lab2
 
         private int getHeight(Node<TKey, TValue> current)
         {
-            return current == null ? 0 : Math.Max(getHeight(current.left), getHeight(current.right)) + 1; ;
+            return current == null ? 0 : current.Height;
         }
 
         private int balance_factor(Node<TKey, TValue> current)
         {
-            return getHeight(current.left) - getHeight(current.right);
+            return getHeight(current.Left ) - getHeight(current.Right);
         }
         #endregion
 
         #region удаление
-        public void Delete(TKey target)
+        public void Delete(TKey key)
         {
-            root = delete(root, target);
-        }
-        private Node<TKey, TValue> delete(Node<TKey, TValue> current, TKey target)
-        {
-            Node<TKey, TValue> parent;
-            if (current == null)
+            var removableNode = FindItem(key);
+
+            if (removableNode == null || removableNode.Key.CompareTo(key) != 0) {
                 throw new ItemNotExistException();
+            }
 
-            if (target.CompareTo(current.Key) < 0) {
-                current.left = delete(current.left, target);
-                if (balance_factor(current) == -2)
-                    current = balance_factor(current.right) <= 0 ? RotateRR(current) : RotateRL(current);
-            }
-            else if (target.CompareTo(current.Key) > 0) {
-                current.right = delete(current.right, target);
-                if (balance_factor(current) == 2)
-                    current = balance_factor(current.left) >= 0 ? RotateLL(current) : RotateLR(current);
-            }
-            else if (current.right != null) {
-                //находим минимальное значение в правом поддереве
-                parent = current.right;
-                while (parent.left != null) {
-                    parent = parent.left;
-                }
-                //заменяем значение минимальным, а его удаляем
-                current.Val = parent.Val;
-                current.right = delete(current.right, parent.Key);
-                //при необходимости балансируем дерево
-                if (balance_factor(current) == 2) {
-                    current = balance_factor(current.left) >= 0 ? RotateLL(current):
-                                                                    RotateLR(current);
-                }
-            }
-            else
-                current = current.left;
+            var successorNode = removableNode;
+            Node<TKey, TValue> successorNodeParent = null;
 
-            return current;
+            if (successorNode.Left != null) {
+                successorNode = successorNode.Left;
+
+                while (successorNode.Right != null) {
+                    successorNode = successorNode.Right;
+                }
+
+                successorNodeParent = successorNode.Parent;
+            }
+            else if (successorNode.Right != null) {
+                successorNode = successorNode.Right;
+
+                while (successorNode.Left != null) {
+                    successorNode = successorNode.Left;
+                }
+
+                successorNodeParent = successorNode.Parent;
+            }
+            else {
+                successorNode = null;
+            }
+
+            ReplaceNodes(removableNode, successorNode);
+
+            if (successorNodeParent != null)
+                successorNodeParent.RecalculateHeight();
         }
         #endregion
 
+        internal void ReplaceNodes(Node<TKey, TValue> replaceableNode, Node<TKey, TValue> successorNode)
+        {
+            if (successorNode == null) {
+                if (replaceableNode == root) {
+                    root = null;
+                }
+                else if (replaceableNode.Parent.Left != null && replaceableNode.Parent.Left == replaceableNode) {
+                    replaceableNode.Parent.Left = null;
+                }
+                else {
+                    replaceableNode.Parent.Right = null;
+                }
+
+                return;
+            }
+
+            replaceableNode.Key = successorNode.Key;
+            replaceableNode.Val = successorNode.Val;
+
+            if (successorNode.Parent != null) {
+                if (successorNode.Left != null) {
+                    successorNode.Left.Parent = successorNode.Parent;
+                    if (successorNode.Parent.Left == successorNode) {
+                        successorNode.Parent.Left = successorNode.Left;
+                    }
+                    else {
+                        successorNode.Parent.Right = successorNode.Left;
+                    }
+                }
+                else if (successorNode.Right != null) {
+                    successorNode.Right.Parent = successorNode.Parent;
+                    if (successorNode.Parent.Left == successorNode) {
+                        successorNode.Parent.Left = successorNode.Right;
+                    }
+                    else {
+                        successorNode.Parent.Right = successorNode.Right;
+                    }
+                }
+                else {
+                    if (successorNode.Parent.Left == successorNode) {
+                        successorNode.Parent.Left = null;
+                    }
+                    else {
+                        successorNode.Parent.Right = null;
+                    }
+                }
+            }
+        }
+
         #region Rotates
-        private Node<TKey, TValue> RotateRR(Node<TKey, TValue> parent)
+        internal void RotateLeft(Node<TKey, TValue> node)
         {
-            Node<TKey, TValue> pivot = parent.right;
-            parent.right = pivot.left;
-            pivot.left = parent;
-            return pivot;
+            Node<TKey, TValue> newNode = node.Right;
+            node.Right = newNode.Left;
+            if (newNode.Left != null) {
+                newNode.Left.Parent = node;
+            }
+
+            newNode.Parent = node.Parent;
+
+            if (node.Parent == null) {
+                root = newNode;
+            }
+            else if (node == node.Parent.Left) {
+                node.Parent.Left = newNode;
+            }
+            else {
+                node.Parent.Right = newNode;
+            }
+
+            newNode.Left = node;
+            node.Parent = newNode;
+
+            node.RecalculateHeight();
+            newNode.RecalculateHeight();
         }
-        private Node<TKey, TValue> RotateLL(Node<TKey, TValue> parent)
+
+        internal void RotateRight(Node<TKey, TValue> node)
         {
-            Node<TKey, TValue> pivot = parent.left;
-            parent.left = pivot.right;
-            pivot.right = parent;
-            return pivot;
-        }
-        private Node<TKey, TValue> RotateLR(Node<TKey, TValue> parent)
-        {
-            Node<TKey, TValue> pivot = parent.left;
-            parent.left = RotateRR(pivot);
-            return RotateLL(parent);
-        }
-        private Node<TKey, TValue> RotateRL(Node<TKey, TValue> parent)
-        {
-            Node<TKey, TValue> pivot = parent.right;
-            parent.right = RotateLL(pivot);
-            return RotateRR(parent);
+            Node<TKey, TValue> newNode = node.Left;
+            node.Left = newNode.Right;
+            if (newNode.Right != null) {
+                newNode.Right.Parent = node;
+            }
+
+            newNode.Parent = node.Parent;
+
+            if (node.Parent == null) {
+                root = newNode;
+            }
+            else if (node == node.Parent.Right) {
+                node.Parent.Right = newNode;
+            }
+            else {
+                node.Parent.Left = newNode;
+            }
+
+            newNode.Right = node;
+            node.Parent = newNode;
+
+            node.RecalculateHeight();
+            newNode.RecalculateHeight();
         }
         #endregion
     }

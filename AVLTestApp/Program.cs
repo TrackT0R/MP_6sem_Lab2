@@ -35,11 +35,7 @@ namespace AVLTestApp
 
             stopwatch.Restart();
             for (int i = 5000; i <= 7000; i++) {
-                try {
-                    avl.Delete(randomIntegers[i]);
-                }
-                catch (ItemNotExistException) {
-                }
+                avl.Delete(randomIntegers[i]);
             }
             stopwatch.Stop();
 
